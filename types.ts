@@ -16,6 +16,7 @@ export interface ComponentRecord {
 
 export interface LocationHistory {
   location: string;
+  project: 'P7LH' | 'P7MH';
   stages: {
     [key in ProjectStage]?: ComponentRecord[];
   };
