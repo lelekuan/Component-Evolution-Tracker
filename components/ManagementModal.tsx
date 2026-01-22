@@ -18,14 +18,12 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
 
-  // 只顯示目前登入專案的位號
   const projectSpecificData = useMemo(() => {
     return data.filter(d => d.project === authenticatedProject);
   }, [data, authenticatedProject]);
 
   if (!isOpen) return null;
 
-  // 輔助函式：同時更新全域資料與目前編輯中的位號
   const updateDatabase = (newData: LocationHistory[]) => {
     onSave(newData);
     if (editingLoc) {
@@ -52,26 +50,22 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
 
   const handleUpdatePart = (stage: ProjectStage, partIdx: number, field: keyof ComponentRecord, value: string) => {
     if (!editingLoc) return;
-
     const newData = data.map(loc => {
       if (loc.location === editingLoc.location && loc.project === authenticatedProject) {
         const newStages = { ...loc.stages };
         const stageParts = [...(newStages[stage] || [])];
         const updatedPart = { ...stageParts[partIdx] };
-
         if (field === 'configs') {
           updatedPart.configs = value.split(',').map(s => s.trim()).filter(s => s !== "");
         } else {
           (updatedPart[field] as any) = value;
         }
-
         stageParts[partIdx] = updatedPart;
         newStages[stage] = stageParts;
         return { ...loc, stages: newStages };
       }
       return loc;
     });
-
     updateDatabase(newData);
   };
 
@@ -113,12 +107,11 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
   };
 
   const processImportedData = (importedEntries: LocationHistory[]) => {
-    // 嚴格檢查專案標籤
     const validEntries = importedEntries.filter(entry => entry.project === authenticatedProject);
     const wrongProjectCount = importedEntries.length - validEntries.length;
 
     if (validEntries.length === 0) {
-      alert(`Error: No entries matched the current project [${authenticatedProject}]. Check your file's 'Project' column.`);
+      alert(`Error: No entries matched the current project [${authenticatedProject}].\n\nPlease check:\n1. Excel "Project" column should be exactly "${authenticatedProject}"\n2. Header names are correct.`);
       return;
     }
 
@@ -146,24 +139,39 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
         const ab = e.target?.result;
         const wb = XLSX.read(ab, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws) as any[];
-
+        // 獲取原始資料
+        const rawRows = XLSX.utils.sheet_to_json(ws) as any[];
         const locMap: Record<string, LocationHistory> = {};
 
-        rows.forEach(row => {
-          const loc = (row.Location || row.location || "").toString().trim().toUpperCase();
-          const proj = (row.Project || row.project || "").toString().trim().toUpperCase();
-          const stageStr = (row.Stage || row.stage || "").toString().trim();
-          const pn = (row['Part Number'] || row.partNumber || row.PN || "").toString().trim();
-          const desc = (row.Description || row.description || "").toString().trim();
-          const cfgStr = (row.Configs || row.configs || "Main").toString();
-          const notedStr = (row.Noted || row.noted || row.Remark || row.remark || "").toString().trim();
+        rawRows.forEach(row => {
+          // 1. 標準化 Key (轉小寫並移除空格)
+          const normalizedRow: any = {};
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().replace(/\s+/g, '')] = row[key];
+          });
+
+          // 2. 抓取欄位值 (支持多種可能的標頭名稱)
+          const loc = (normalizedRow.location || "").toString().trim().toUpperCase();
+          const proj = (normalizedRow.project || "").toString().trim().toUpperCase();
+          const stageInput = (normalizedRow.stage || "").toString().trim();
+          const pn = (normalizedRow.partnumber || normalizedRow.pn || "").toString().trim();
+          const desc = (normalizedRow.description || "").toString().trim();
+          const cfgStr = (normalizedRow.configs || "Main").toString();
+          const notedStr = (normalizedRow.noted || normalizedRow.remark || "").toString().trim();
 
           if (!loc || !proj || !pn) return;
 
-          // 驗證 Stage 是否合法
-          if (!Object.values(ProjectStage).includes(stageStr as any)) {
-            console.warn(`Invalid stage [${stageStr}] for location ${loc}. Skipping row.`);
+          // 3. 模糊匹配 ProjectStage (不分大小寫)
+          let matchedStage: ProjectStage | null = null;
+          for (const s of Object.values(ProjectStage)) {
+            if (s.toLowerCase() === stageInput.toLowerCase()) {
+              matchedStage = s;
+              break;
+            }
+          }
+
+          if (!matchedStage) {
+            console.warn(`Row skipped: Invalid stage [${stageInput}] for location ${loc}`);
             return;
           }
 
@@ -171,12 +179,11 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
             locMap[loc] = { location: loc, project: proj as any, stages: {} };
           }
 
-          const stage = stageStr as ProjectStage;
-          if (!locMap[loc].stages[stage]) {
-            locMap[loc].stages[stage] = [];
+          if (!locMap[loc].stages[matchedStage]) {
+            locMap[loc].stages[matchedStage] = [];
           }
 
-          locMap[loc].stages[stage]?.push({
+          locMap[loc].stages[matchedStage]?.push({
             partNumber: pn,
             description: desc,
             configs: cfgStr.split(',').map(s => s.trim()).filter(s => s !== ""),
@@ -186,6 +193,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
 
         processImportedData(Object.values(locMap));
       } catch (err) {
+        console.error(err);
         alert("Excel Parsing Failed. Please ensure your file matches the template headers.");
       }
     };
@@ -196,7 +204,6 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-        {/* Header */}
         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
@@ -214,7 +221,6 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-          {/* Sidebar */}
           <div className="w-full md:w-80 border-r border-slate-100 flex flex-col bg-slate-50/50">
             <div className="p-6 border-b border-slate-100">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Quick Add Location</label>
@@ -250,7 +256,6 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
             </div>
           </div>
 
-          {/* Editor Workspace */}
           <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
             {editingLoc ? (
               <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-400">
@@ -293,7 +298,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
                                   <input className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-blue-500" value={part.partNumber} onChange={(e)=>handleUpdatePart(stage,idx,'partNumber',e.target.value)} />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[9px] font-black text-slate-400 uppercase">Configs (e.g. Main, FBU)</label>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase">Configs</label>
                                   <input className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" value={part.configs.join(', ')} onChange={(e)=>handleUpdatePart(stage,idx,'configs',e.target.value)} />
                                 </div>
                               </div>
@@ -320,7 +325,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Select or Import Data</h3>
                 <p className="text-slate-400 text-xs max-w-sm mx-auto leading-relaxed">
-                  Start by choosing a location on the left or use the <span className="font-bold text-slate-700">Excel Upload</span> to batch import your project BOM.
+                  Choose a location on the left or use <span className="font-bold text-slate-700">Excel Upload</span>.
                 </p>
                 <div className="mt-8 grid grid-cols-2 gap-4 max-w-md">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
@@ -329,7 +334,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                     <p className="text-[10px] font-black text-slate-900 uppercase mb-1">Safety</p>
-                    <p className="text-[9px] text-slate-500">Items from other projects will be automatically skipped during import.</p>
+                    <p className="text-[9px] text-slate-500">Only items for <span className="font-bold">{authenticatedProject}</span> will be imported.</p>
                   </div>
                 </div>
               </div>
@@ -337,11 +342,10 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="px-10 py-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 bg-slate-50">
           <div className="flex flex-col gap-1">
             <p className="text-sm font-black text-slate-900 italic">Engineering Sync Engine</p>
-            <p className="text-[10px] text-slate-500">Update the global database using local source files.</p>
+            <p className="text-[10px] text-slate-500">Update global database from files.</p>
           </div>
           <div className="flex gap-3">
             <input type="file" accept=".xlsx, .xls" ref={excelFileInputRef} onChange={handleExcelUpload} className="hidden" />
@@ -358,7 +362,6 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
               reader.readAsText(file);
               if(jsonFileInputRef.current) jsonFileInputRef.current.value='';
             }} className="hidden" />
-            
             <button onClick={() => excelFileInputRef.current?.click()} className="px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm">
               <i className="fa-solid fa-file-excel text-green-600"></i> Excel Upload
             </button>
