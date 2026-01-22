@@ -106,6 +106,11 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
     link.click();
   };
 
+  /**
+   * 實現「增量合併」邏輯：
+   * 1. 保留原本存在的不同階段。
+   * 2. 在同一階段內，若有新料號或新配置則累加進去。
+   */
   const processImportedData = (importedEntries: LocationHistory[]) => {
     const validEntries = importedEntries.filter(entry => entry.project === authenticatedProject);
     const wrongProjectCount = importedEntries.length - validEntries.length;
@@ -116,17 +121,45 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
     }
 
     let updatedData = [...data];
+
     validEntries.forEach(newEntry => {
-      const index = updatedData.findIndex(d => d.location === newEntry.location && d.project === authenticatedProject);
-      if (index !== -1) {
-        updatedData[index] = newEntry;
-      } else {
+      const existingIdx = updatedData.findIndex(d => d.location === newEntry.location && d.project === authenticatedProject);
+      
+      if (existingIdx === -1) {
+        // 全新的位號，直接新增
         updatedData.push(newEntry);
+      } else {
+        // 已存在的位號，進行「增量合併」
+        const existingEntry = { ...updatedData[existingIdx] };
+        const newStages = { ...existingEntry.stages };
+
+        // 遍歷匯入資料中的每個階段
+        Object.keys(newEntry.stages).forEach(stageKey => {
+          const stage = stageKey as ProjectStage;
+          const newRecords = newEntry.stages[stage] || [];
+          const existingRecords = newStages[stage] || [];
+
+          // 合併紀錄並去重 (如果 PN + Configs + Noted 完全一致才視為重複)
+          newRecords.forEach(newRec => {
+            const isDuplicate = existingRecords.some(er => 
+              er.partNumber === newRec.partNumber && 
+              er.configs.join(',') === newRec.configs.join(',') &&
+              er.noted === newRec.noted
+            );
+            if (!isDuplicate) {
+              existingRecords.push(newRec);
+            }
+          });
+
+          newStages[stage] = existingRecords;
+        });
+
+        updatedData[existingIdx] = { ...existingEntry, stages: newStages };
       }
     });
 
     onSave(updatedData);
-    alert(`Successfully imported ${validEntries.length} items for ${authenticatedProject}.${wrongProjectCount > 0 ? `\n(Skipped ${wrongProjectCount} items from other projects)` : ''}`);
+    alert(`Successfully processed ${validEntries.length} items for ${authenticatedProject}.${wrongProjectCount > 0 ? `\n(Skipped ${wrongProjectCount} items from other projects)` : ''}\n\nExisting stages were preserved and new components were added.`);
   };
 
   const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,19 +172,18 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
         const ab = e.target?.result;
         const wb = XLSX.read(ab, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        // 獲取原始資料
         const rawRows = XLSX.utils.sheet_to_json(ws) as any[];
         const locMap: Record<string, LocationHistory> = {};
 
         rawRows.forEach(row => {
-          // 1. 標準化 Key (轉小寫並移除空格)
+          // 1. 標準化 Key (不分大小寫、移除空格)
           const normalizedRow: any = {};
           Object.keys(row).forEach(key => {
             normalizedRow[key.toLowerCase().replace(/\s+/g, '')] = row[key];
           });
 
-          // 2. 抓取欄位值 (支持多種可能的標頭名稱)
-          const loc = (normalizedRow.location || "").toString().trim().toUpperCase();
+          // 2. 解析基本欄位
+          const locCell = (normalizedRow.location || "").toString().trim().toUpperCase();
           const proj = (normalizedRow.project || "").toString().trim().toUpperCase();
           const stageInput = (normalizedRow.stage || "").toString().trim();
           const pn = (normalizedRow.partnumber || normalizedRow.pn || "").toString().trim();
@@ -159,9 +191,12 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
           const cfgStr = (normalizedRow.configs || "Main").toString();
           const notedStr = (normalizedRow.noted || normalizedRow.remark || "").toString().trim();
 
-          if (!loc || !proj || !pn) return;
+          if (!locCell || !proj || !pn) return;
 
-          // 3. 模糊匹配 ProjectStage (不分大小寫)
+          // 3. 處理「多位號單行」情況 (如 R500,R501)
+          const locations = locCell.split(/[,，\s]+/).filter((s: string) => s !== "");
+
+          // 4. 匹配階段
           let matchedStage: ProjectStage | null = null;
           for (const s of Object.values(ProjectStage)) {
             if (s.toLowerCase() === stageInput.toLowerCase()) {
@@ -169,25 +204,25 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
               break;
             }
           }
+          if (!matchedStage) return;
 
-          if (!matchedStage) {
-            console.warn(`Row skipped: Invalid stage [${stageInput}] for location ${loc}`);
-            return;
-          }
+          // 5. 將每個位號加入暫存 Map
+          locations.forEach((loc: string) => {
+            const mapKey = `${loc}-${proj}`;
+            if (!locMap[mapKey]) {
+              locMap[mapKey] = { location: loc, project: proj as any, stages: {} };
+            }
 
-          if (!locMap[loc]) {
-            locMap[loc] = { location: loc, project: proj as any, stages: {} };
-          }
+            if (!locMap[mapKey].stages[matchedStage!]) {
+              locMap[mapKey].stages[matchedStage!] = [];
+            }
 
-          if (!locMap[loc].stages[matchedStage]) {
-            locMap[loc].stages[matchedStage] = [];
-          }
-
-          locMap[loc].stages[matchedStage]?.push({
-            partNumber: pn,
-            description: desc,
-            configs: cfgStr.split(',').map(s => s.trim()).filter(s => s !== ""),
-            noted: notedStr
+            locMap[mapKey].stages[matchedStage!]?.push({
+              partNumber: pn,
+              description: desc,
+              configs: cfgStr.split(/[,，\s]+/).map(s => s.trim()).filter(s => s !== ""),
+              noted: notedStr
+            });
           });
         });
 
@@ -211,7 +246,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
             </div>
             <div>
               <h2 className="text-2xl font-black text-slate-900">Database Manager <span className="text-blue-600 ml-2">[{authenticatedProject}]</span></h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Multi-Format Engineering Data Maintenance</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Incremental Engineering Sync Mode</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
