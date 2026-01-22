@@ -142,7 +142,16 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center">
+            {/* NEW: Explicit Management Button in Header */}
+            <button 
+              onClick={() => setIsAdminOpen(true)}
+              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-slate-700 hover:text-blue-300 transition-all flex items-center gap-2"
+            >
+              <i className="fa-solid fa-database"></i>
+              Manage DB
+            </button>
+
             <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
               {['All', 'P7LH', 'P7MH'].map((p) => (
                 <button
@@ -157,19 +166,19 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="relative w-full md:w-80">
+            <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                 <i className="fa-solid fa-magnifying-glass text-xs"></i>
               </div>
               <input
                 type="text"
                 className="block w-full pl-9 pr-3 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white text-sm focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                placeholder={`Search Location or Part Number...`}
+                placeholder={`Search Loc / PN...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               {searchResults.length > 0 && (
-                <div className="absolute mt-2 w-full bg-white rounded-xl shadow-2xl z-50 border border-slate-200 max-h-80 overflow-y-auto ring-1 ring-black ring-opacity-5">
+                <div className="absolute mt-2 w-full bg-white rounded-xl shadow-2xl z-50 border border-slate-200 max-h-80 overflow-y-auto ring-1 ring-black ring-opacity-5 text-slate-900">
                   {searchResults.map((res, i) => (
                     <button key={i} onClick={() => handleSelect(res)} className="w-full text-left px-4 py-3 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50 transition-colors">
                       <div>
@@ -196,7 +205,7 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-700 gap-10">
             <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm text-center max-w-4xl w-full">
               <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner border border-blue-100">
-                <i className="fa-solid fa-database"></i>
+                <i className="fa-solid fa-microchip"></i>
               </div>
               <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Engineering Lifecycle Database</h2>
               <p className="text-slate-500 mb-12 text-base leading-relaxed max-w-xl mx-auto">
@@ -205,20 +214,28 @@ const App: React.FC = () => {
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left mb-12">
+                {/* NEW: Primary Action Card for Management */}
+                <button 
+                  onClick={() => setIsAdminOpen(true)}
+                  className="p-6 bg-slate-900 text-white rounded-3xl border border-slate-800 hover:scale-105 hover:shadow-2xl transition-all group text-left relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 text-4xl rotate-12 group-hover:rotate-0 transition-transform">
+                    <i className="fa-solid fa-database"></i>
+                  </div>
+                  <h4 className="font-bold text-xs mb-4 uppercase tracking-widest flex items-center gap-2 text-blue-400">
+                    <i className="fa-solid fa-pen-to-square"></i> Maintain
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed font-bold">
+                    Go to <span className="text-white underline decoration-blue-500 underline-offset-4">Database Manager</span> to edit locations & PN history.
+                  </p>
+                </button>
+
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-blue-300 hover:shadow-md transition-all group">
                   <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
                     <i className="fa-solid fa-magnifying-glass text-blue-500 group-hover:scale-110 transition-transform"></i> Searchable
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Instantly query by <span className="font-bold text-slate-700">Location</span> or <span className="font-bold text-slate-700">Part Number</span>.
-                  </p>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-amber-300 hover:shadow-md transition-all group">
-                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-highlighter text-amber-500 group-hover:scale-110 transition-transform"></i> Managed
-                  </h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Use the <span className="text-slate-900 font-bold uppercase">Database Manager</span> to add or edit your custom records.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-green-300 hover:shadow-md transition-all group">
