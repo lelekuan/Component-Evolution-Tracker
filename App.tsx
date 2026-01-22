@@ -56,8 +56,6 @@ const App: React.FC = () => {
     if (!term) return { locations: [], partNumbers: [] };
 
     const locs = filteredData.filter(item => item.location.toLowerCase().includes(term));
-    
-    // 收集所有匹配的料號
     const pns: Set<string> = new Set();
     filteredData.forEach(item => {
       Object.values(item.stages).forEach((recs: any) => {
@@ -111,6 +109,7 @@ const App: React.FC = () => {
   const checkIfChanged = (loc: LocationHistory, stageA: ProjectStage, stageB: ProjectStage) => {
     const sA = loc.stages[stageA] || [];
     const sB = loc.stages[stageB] || [];
+    if (sA.length === 0 && sB.length === 0) return false;
     if (sA.length !== sB.length) return true;
     const sAPNs = sA.map(r => r.partNumber).sort().join(',');
     const sBPNs = sB.map(r => r.partNumber).sort().join(',');
@@ -129,7 +128,10 @@ const App: React.FC = () => {
     }
   };
 
+  // 渲染用順序 (遞減: MP -> P1a)
   const orderedStages = useMemo(() => Object.values(ProjectStage).reverse(), []);
+  // 時序順序 (遞增: P1a -> MP)
+  const chronologicalStages = useMemo(() => Object.values(ProjectStage), []);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#F8FAFC]">
@@ -190,7 +192,6 @@ const App: React.FC = () => {
       <main className="flex-1 container mx-auto p-4 md:p-8">
         {!selectedLocation && !selectedPartNumber ? (
           <div className="space-y-12 animate-in fade-in duration-500">
-            {/* Feature Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
@@ -227,8 +228,8 @@ const App: React.FC = () => {
                   <i className="fa-solid fa-tag text-purple-500"></i>
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Indexed ({data.length})</h3>
                 </div>
-                <div className="space-y-1.5">
-                  {data.slice(0, 4).map(loc => (
+                <div className="space-y-1.5 max-h-16 overflow-y-auto">
+                  {data.slice(0, 10).map(loc => (
                     <button key={loc.location} onClick={() => handleSelectLocation(loc)} className="block text-slate-400 hover:text-blue-600 text-xs font-bold transition-colors">
                       {loc.location}
                     </button>
@@ -237,7 +238,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Global Evolution Audit Section */}
             <div className="mt-20">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
@@ -253,28 +253,17 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Source Stage</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                      value={globalStages.a}
-                      onChange={(e) => setGlobalStages({...globalStages, a: e.target.value as ProjectStage})}
-                    >
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" value={globalStages.a} onChange={(e) => setGlobalStages({...globalStages, a: e.target.value as ProjectStage})}>
                       {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Stage</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                      value={globalStages.b}
-                      onChange={(e) => setGlobalStages({...globalStages, b: e.target.value as ProjectStage})}
-                    >
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" value={globalStages.b} onChange={(e) => setGlobalStages({...globalStages, b: e.target.value as ProjectStage})}>
                       {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <button 
-                    onClick={() => setGlobalDiffs(data.filter(loc => checkIfChanged(loc, globalStages.a, globalStages.b)))}
-                    className="bg-[#0F172A] text-white rounded-2xl py-4 px-10 font-black text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-xl h-[58px]"
-                  >
+                  <button onClick={() => setGlobalDiffs(data.filter(loc => checkIfChanged(loc, globalStages.a, globalStages.b)))} className="bg-[#0F172A] text-white rounded-2xl py-4 px-10 font-black text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-xl h-[58px]">
                     Compare Stages
                   </button>
                 </div>
@@ -358,10 +347,19 @@ const App: React.FC = () => {
                 {orderedStages.map((stage) => {
                   const records = selectedLocation!.stages[stage];
                   if (!records || records.length === 0) return null;
+                  
+                  // 找出時序上的前一個階段來進行 Highlight 判斷
+                  const currentIdx = chronologicalStages.indexOf(stage);
+                  let isChanged = false;
+                  if (currentIdx > 0) {
+                    const prevStage = chronologicalStages[currentIdx - 1];
+                    isChanged = checkIfChanged(selectedLocation!, stage, prevStage);
+                  }
+
                   return (
                     <div key={stage} className="relative">
-                      <div className="absolute -left-[54px] top-6 w-7 h-7 rounded-full bg-white border-4 border-blue-600 z-10 shadow-md"></div>
-                      <StageCard stage={stage} records={records} isChanged={false} />
+                      <div className={`absolute -left-[54px] top-6 w-7 h-7 rounded-full bg-white border-4 ${isChanged ? 'border-amber-400' : 'border-blue-600'} z-10 shadow-md`}></div>
+                      <StageCard stage={stage} records={records} isChanged={isChanged} />
                     </div>
                   );
                 })}
