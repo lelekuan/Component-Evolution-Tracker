@@ -16,13 +16,7 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Initial release"
         },
-        {
-          "partNumber": "118S00495",
-          "description": "RES,TK,226KOHM,1%,1/20W,0201",
-          "configs": [
-            "Main"
-          ],
-          "noted": "with ENET"
+      
         }
       ],
       "EVT": [
@@ -30,8 +24,8 @@ export const MOCK_DATA: LocationHistory[] = [
           "partNumber": "118S00495",
           "description": "RES,TK,226KOHM,1%,1/20W,0201",
           "configs": [
-            "FBU",
-            "Main"
+            "FBU"
+    
           ],
           "noted": "Mini config split to unique PN"
         },
@@ -39,17 +33,12 @@ export const MOCK_DATA: LocationHistory[] = [
           "partNumber": "118S01040",
           "description": "RES,TK,232K OHM,1%,1/20W,0201",
           "configs": [
-            "Mini"
-          ],
-          "noted": "Specific value for Mini optimization"
-        },
-        {
-          "partNumber": "118S01040",
-          "description": "RES,TK,232K OHM,1%,1/20W,0201",
-          "configs": [
-            "Main"
+            "Mini","Main"
           ],
           "noted": "with ENET"
+        }
+        
+        
         }
       ]
     }
