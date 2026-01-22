@@ -12,6 +12,7 @@ export interface ComponentRecord {
   partNumber: string;
   description: string;
   configs: string[]; // e.g., ['FBU', 'Mini', 'Main']
+  noted?: string; // Additional engineering notes
 }
 
 export interface LocationHistory {

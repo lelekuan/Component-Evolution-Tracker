@@ -38,6 +38,12 @@ const StageCard: React.FC<StageCardProps> = ({ stage, records, isChanged }) => {
                 </span>
                 <span className="text-sm text-slate-500 italic">{record.description}</span>
               </div>
+              {record.noted && (
+                <p className="mt-2 text-[10px] text-slate-900 font-bold bg-slate-50 border border-slate-100 px-2 py-1 rounded inline-block">
+                  <i className="fa-solid fa-comment-dots mr-1.5 opacity-50"></i>
+                  {record.noted}
+                </p>
+              )}
             </div>
           </div>
         ))}

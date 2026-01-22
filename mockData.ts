@@ -11,19 +11,22 @@ export const MOCK_DATA: LocationHistory[] = [
         { 
           partNumber: "118S00495", 
           description: "RES,TK,226KOHM,1%,1/20W,0201", 
-          configs: ["FBU", "Mini", "Main"] 
+          configs: ["FBU", "Mini", "Main"],
+          noted: "Initial release"
         }
       ],
       [ProjectStage.EVT]: [
         { 
           partNumber: "118S00495", 
           description: "RES,TK,226KOHM,1%,1/20W,0201", 
-          configs: ["FBU", "Main"] 
+          configs: ["FBU", "Main"],
+          noted: "Mini config split to unique PN"
         },
         { 
           partNumber: "118S01040", 
           description: "RES,TK,232K OHM,1%,1/20W,0201", 
-          configs: ["Mini"] 
+          configs: ["Mini"],
+          noted: "Specific value for Mini optimization"
         }
       ]
     }
@@ -33,7 +36,7 @@ export const MOCK_DATA: LocationHistory[] = [
     project: "P7LH",
     stages: {
       [ProjectStage.P1B]: [{ partNumber: "118S00373", description: "RES,TK,30.1K OHM,1%,1/20W,0201", configs: ["Main"] }],
-      [ProjectStage.EVT]: [{ partNumber: "118S00521", description: "RES,TK,30K OHM,1%,1/20W,0201", configs: ["Main"] }]
+      [ProjectStage.EVT]: [{ partNumber: "118S00521", description: "RES,TK,30K OHM,1%,1/20W,0201", configs: ["Main"], noted: "Tolerance update" }]
     }
   },
   {
@@ -41,7 +44,7 @@ export const MOCK_DATA: LocationHistory[] = [
     project: "P7LH",
     stages: {
       [ProjectStage.P1B]: [{ partNumber: "338S01216", description: "IC,PMU,KAZOO,D3252,A1,OTP-BC,LTPI,WCSP56", configs: ["Build A"] }],
-      [ProjectStage.EVT]: [{ partNumber: "338S01281", description: "IC,PMU,KAZOO,D3252,A1,OTP-BC,PBO,WLCSP56", configs: ["Build B"] }]
+      [ProjectStage.EVT]: [{ partNumber: "338S01281", description: "IC,PMU,KAZOO,D3252,A1,OTP-BC,PBO,WLCSP56", configs: ["Build B"], noted: "Package change for PBO" }]
     }
   },
   {
@@ -65,7 +68,7 @@ export const MOCK_DATA: LocationHistory[] = [
     project: "P7LH",
     stages: {
       [ProjectStage.P1B]: [{ partNumber: "740S00056", description: "FUSE,6A,32V,13MOHM,0603", configs: ["Main"] }],
-      [ProjectStage.EVT]: [{ partNumber: "740S0146", description: "FUSE 32V HIGH I2T 0603 FAST 6A", configs: ["Main"] }]
+      [ProjectStage.EVT]: [{ partNumber: "740S0146", description: "FUSE 32V HIGH I2T 0603 FAST 6A", configs: ["Main"], noted: "Improve surge robustness" }]
     }
   }
 ];

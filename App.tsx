@@ -59,7 +59,10 @@ const App: React.FC = () => {
     return filteredData.filter(item => 
       item.location.toLowerCase().includes(term) || 
       Object.values(item.stages).some((recs: any) => 
-        recs?.some((r: ComponentRecord) => r.partNumber.toLowerCase().includes(term))
+        recs?.some((r: ComponentRecord) => 
+          r.partNumber.toLowerCase().includes(term) || 
+          r.noted?.toLowerCase().includes(term)
+        )
       )
     );
   }, [searchTerm, filteredData]);
@@ -179,7 +182,7 @@ const App: React.FC = () => {
               <input
                 type="text"
                 className="block w-full pl-9 pr-3 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white text-sm focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                placeholder={`Search Location or Part Number...`}
+                placeholder={`Search Location, PN, or Notes...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -224,7 +227,7 @@ const App: React.FC = () => {
                     <i className="fa-solid fa-magnifying-glass text-blue-500 group-hover:scale-110 transition-transform"></i> Searchable
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Instantly query by <span className="font-bold text-slate-700">Location</span> or <span className="font-bold text-slate-700">Part Number</span>.
+                    Instantly query by <span className="font-bold text-slate-700">Location</span>, <span className="font-bold text-slate-700">PN</span>, or <span className="font-bold text-slate-700">Notes</span>.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-amber-300 hover:shadow-md transition-all group">

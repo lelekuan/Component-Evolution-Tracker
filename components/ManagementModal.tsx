@@ -80,7 +80,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
     const newData = data.map(loc => {
       if (loc.location === editingLoc.location && loc.project === authenticatedProject) {
         const newStages = { ...loc.stages };
-        const newPart: ComponentRecord = { partNumber: "NEW-PN", description: "New Component", configs: ["Main"] };
+        const newPart: ComponentRecord = { partNumber: "NEW-PN", description: "New Component", configs: ["Main"], noted: "" };
         newStages[stage] = [...(newStages[stage] || []), newPart];
         return { ...loc, stages: newStages };
       }
@@ -157,6 +157,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
           const pn = (row['Part Number'] || row.partNumber || row.PN || "").toString().trim();
           const desc = (row.Description || row.description || "").toString().trim();
           const cfgStr = (row.Configs || row.configs || "Main").toString();
+          const notedStr = (row.Noted || row.noted || row.Remark || row.remark || "").toString().trim();
 
           if (!loc || !proj || !pn) return;
 
@@ -178,7 +179,8 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
           locMap[loc].stages[stage]?.push({
             partNumber: pn,
             description: desc,
-            configs: cfgStr.split(',').map(s => s.trim()).filter(s => s !== "")
+            configs: cfgStr.split(',').map(s => s.trim()).filter(s => s !== ""),
+            noted: notedStr
           });
         });
 
@@ -299,6 +301,10 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
                                 <label className="text-[9px] font-black text-slate-400 uppercase">Description</label>
                                 <input className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-blue-500" value={part.description} onChange={(e)=>handleUpdatePart(stage,idx,'description',e.target.value)} />
                               </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase text-slate-600">Engineering Notes (Noted)</label>
+                                <input className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-blue-500 font-bold" value={part.noted || ''} placeholder="Add additional remarks..." onChange={(e)=>handleUpdatePart(stage,idx,'noted',e.target.value)} />
+                              </div>
                             </div>
                           ))
                         )}
@@ -319,7 +325,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({ isOpen, onClose, data
                 <div className="mt-8 grid grid-cols-2 gap-4 max-w-md">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                     <p className="text-[10px] font-black text-slate-900 uppercase mb-1">Excel Format</p>
-                    <p className="text-[9px] text-slate-500">Headers: Location, Project, Stage, Part Number, Description, Configs.</p>
+                    <p className="text-[9px] text-slate-500">Headers: Location, Project, Stage, Part Number, Description, Configs, Noted.</p>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                     <p className="text-[10px] font-black text-slate-900 uppercase mb-1">Safety</p>
