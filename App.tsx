@@ -1,16 +1,28 @@
 
-import React, { useState, useMemo } from 'react';
-import { MOCK_DATA } from './mockData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { MOCK_DATA as INITIAL_DATA } from './mockData';
 import { LocationHistory, ProjectStage, ComponentRecord } from './types';
 import StageCard from './components/StageCard';
 import ComparisonView from './components/ComparisonView';
+import ManagementModal from './components/ManagementModal';
 import { analyzeChanges } from './services/geminiService';
 
 const App: React.FC = () => {
+  // Persistence Logic: Load from localStorage or fallback to mockData
+  const [data, setData] = useState<LocationHistory[]>(() => {
+    const saved = localStorage.getItem('component_tracker_data');
+    return saved ? JSON.parse(saved) : INITIAL_DATA;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('component_tracker_data', JSON.stringify(data));
+  }, [data]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationHistory | null>(null);
   const [projectFilter, setProjectFilter] = useState<'All' | 'P7LH' | 'P7MH'>('All');
   const [viewMode, setViewMode] = useState<'timeline' | 'compare'>('timeline');
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   
   // Local Detail Comparison State
   const [compareStages, setCompareStages] = useState<{ a: ProjectStage; b: ProjectStage }>({
@@ -29,17 +41,17 @@ const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const filteredData = useMemo(() => {
-    if (projectFilter === 'All') return MOCK_DATA;
-    return MOCK_DATA.filter(item => item.project === projectFilter);
-  }, [projectFilter]);
+    if (projectFilter === 'All') return data;
+    return data.filter(item => item.project === projectFilter);
+  }, [projectFilter, data]);
 
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return [];
     return filteredData.filter(item => 
       item.location.toLowerCase().includes(term) || 
-      (Object.values(item.stages) as (ComponentRecord[] | undefined)[]).some(recs => 
-        recs?.some(r => r.partNumber.toLowerCase().includes(term))
+      Object.values(item.stages).some((recs: any) => 
+        recs?.some((r: ComponentRecord) => r.partNumber.toLowerCase().includes(term))
       )
     );
   }, [searchTerm, filteredData]);
@@ -48,7 +60,7 @@ const App: React.FC = () => {
     setSelectedLocation(loc);
     setAiAnalysis(null);
     setSearchTerm('');
-    setGlobalDiffs(null); // Clear global diffs when entering detail
+    setGlobalDiffs(null);
     setViewMode('timeline');
   };
 
@@ -63,23 +75,45 @@ const App: React.FC = () => {
   const checkIfChanged = (loc: LocationHistory, stageA = ProjectStage.P1B, stageB = ProjectStage.EVT) => {
     const sA = loc.stages[stageA] || [];
     const sB = loc.stages[stageB] || [];
-    
     if (sA.length !== sB.length) return true;
-    
     const sAPNs = sA.map(r => r.partNumber).sort().join(',');
     const sBPNs = sB.map(r => r.partNumber).sort().join(',');
-    
     return sAPNs !== sBPNs;
   };
 
   const runGlobalCompare = () => {
-    const diffs = MOCK_DATA.filter(loc => checkIfChanged(loc, globalStages.a, globalStages.b));
+    const diffs = data.filter(loc => checkIfChanged(loc, globalStages.a, globalStages.b));
     setGlobalDiffs(diffs);
   };
 
+  // Sync selectedLocation if underlying data changes in admin panel
+  useEffect(() => {
+    if (selectedLocation) {
+      const updated = data.find(d => d.location === selectedLocation.location);
+      if (updated) setSelectedLocation(updated);
+    }
+  }, [data]);
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50">
-      {/* Header - Professional Dark Aesthetic */}
+      {/* Admin Floating Action Button */}
+      <button 
+        onClick={() => setIsAdminOpen(true)}
+        className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
+      >
+        <i className="fa-solid fa-database text-xl group-hover:hidden"></i>
+        <i className="fa-solid fa-plus text-xl hidden group-hover:block"></i>
+        <span className="absolute -top-12 right-0 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest shadow-xl pointer-events-none">Manage Data</span>
+      </button>
+
+      <ManagementModal 
+        isOpen={isAdminOpen} 
+        onClose={() => setIsAdminOpen(false)} 
+        data={data}
+        onSave={(newData) => setData(newData)}
+      />
+
+      {/* Header */}
       <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b border-slate-700">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setSelectedLocation(null); setGlobalDiffs(null); }}>
@@ -160,23 +194,23 @@ const App: React.FC = () => {
                     <i className="fa-solid fa-magnifying-glass text-blue-500 group-hover:scale-110 transition-transform"></i> Searchable
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Instantly query by <span className="font-bold text-slate-700">Location</span> (e.g., RF883) or <span className="font-bold text-slate-700">Part Number</span>.
+                    Instantly query by <span className="font-bold text-slate-700">Location</span> or <span className="font-bold text-slate-700">Part Number</span>.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-amber-300 hover:shadow-md transition-all group">
                   <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-highlighter text-amber-500 group-hover:scale-110 transition-transform"></i> Highlights
+                    <i className="fa-solid fa-highlighter text-amber-500 group-hover:scale-110 transition-transform"></i> Managed
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Engineering changes are automatically flagged with <span className="text-amber-600 font-bold uppercase tracking-tighter">Part Changed</span> alerts.
+                    Use the <span className="text-slate-900 font-bold uppercase">Database Manager</span> to add or edit your custom records.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-green-300 hover:shadow-md transition-all group">
                   <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-code-compare text-green-500 group-hover:scale-110 transition-transform"></i> Stage Select
+                    <i className="fa-solid fa-code-compare text-green-500 group-hover:scale-110 transition-transform"></i> Comparisons
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Compare any <span className="font-bold text-slate-700">two milestones</span> side-by-side using the custom stage selection tool.
+                    Compare any <span className="font-bold text-slate-700">two milestones</span> side-by-side using the evolution tool below.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-purple-300 hover:shadow-md transition-all group overflow-hidden">
@@ -189,7 +223,6 @@ const App: React.FC = () => {
                         {item.location}
                       </button>
                     ))}
-                    {filteredData.length > 10 && <p className="text-[10px] text-slate-400 italic font-medium pt-1">...and more</p>}
                   </div>
                 </div>
               </div>
@@ -339,16 +372,20 @@ const App: React.FC = () => {
             {/* Stages Section */}
             {viewMode === 'timeline' ? (
               <div className="relative border-l-4 border-slate-100 ml-6 pl-10 space-y-10">
-                {[ProjectStage.P1B, ProjectStage.EVT].map((stage) => (
-                  <div key={stage} className="relative">
-                    <div className="absolute -left-[54px] top-6 w-7 h-7 rounded-full bg-white border-4 border-blue-600 z-10 shadow-md"></div>
-                    <StageCard 
-                      stage={stage} 
-                      records={selectedLocation.stages[stage] || []} 
-                      isChanged={checkIfChanged(selectedLocation)}
-                    />
-                  </div>
-                ))}
+                {Object.values(ProjectStage).map((stage) => {
+                  const records = selectedLocation.stages[stage];
+                  if (!records || records.length === 0) return null;
+                  return (
+                    <div key={stage} className="relative">
+                      <div className="absolute -left-[54px] top-6 w-7 h-7 rounded-full bg-white border-4 border-blue-600 z-10 shadow-md"></div>
+                      <StageCard 
+                        stage={stage} 
+                        records={records} 
+                        isChanged={checkIfChanged(selectedLocation)}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-8">
@@ -396,10 +433,10 @@ const App: React.FC = () => {
       <footer className="bg-white border-t border-slate-200 p-8 text-center shadow-inner mt-auto">
         <div className="max-w-4xl mx-auto opacity-50 flex flex-col items-center gap-3">
           <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.3em] font-black">
-            © 2024 Component Evolution Tracking System • Engineering Platform v1.0
+            © 2024 Component Evolution Tracking System • Engineering Platform v1.1
           </p>
           <div className="h-0.5 w-12 bg-slate-200 rounded-full"></div>
-          <p className="text-[9px] text-slate-400 font-medium">Query component part number shifts between stages.</p>
+          <p className="text-[9px] text-slate-400 font-medium">Query & Maintain component part number shifts across project stages.</p>
         </div>
       </footer>
     </div>
