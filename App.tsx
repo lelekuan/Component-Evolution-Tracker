@@ -8,7 +8,6 @@ import ManagementModal from './components/ManagementModal';
 import { analyzeChanges } from './services/geminiService';
 
 const App: React.FC = () => {
-  // Persistence Logic: Load from localStorage or fallback to mockData
   const [data, setData] = useState<LocationHistory[]>(() => {
     const saved = localStorage.getItem('component_tracker_data');
     if (saved) {
@@ -30,15 +29,16 @@ const App: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<LocationHistory | null>(null);
   const [projectFilter, setProjectFilter] = useState<'All' | 'P7LH' | 'P7MH'>('All');
   const [viewMode, setViewMode] = useState<'timeline' | 'compare'>('timeline');
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   
-  // Local Detail Comparison State
+  // Admin State
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [authProject, setAuthProject] = useState<'P7LH' | 'P7MH' | null>(null);
+  
   const [compareStages, setCompareStages] = useState<{ a: ProjectStage; b: ProjectStage }>({
     a: ProjectStage.P1B,
     b: ProjectStage.EVT
   });
 
-  // Global Comparison State
   const [globalStages, setGlobalStages] = useState<{ a: ProjectStage; b: ProjectStage }>({
     a: ProjectStage.P1B,
     b: ProjectStage.EVT
@@ -100,7 +100,20 @@ const App: React.FC = () => {
     setGlobalDiffs(diffs);
   };
 
-  // Sync selectedLocation if underlying data changes in admin panel
+  // Open Admin with Password check
+  const handleOpenAdmin = () => {
+    const pwd = window.prompt("Enter Project Code (e.g., P7LH or P7MH) to access maintenance:");
+    if (!pwd) return;
+    
+    const upperPwd = pwd.toUpperCase().trim();
+    if (upperPwd === 'P7LH' || upperPwd === 'P7MH') {
+      setAuthProject(upperPwd as 'P7LH' | 'P7MH');
+      setIsAdminOpen(true);
+    } else {
+      alert("Invalid Project Code. Access Denied.");
+    }
+  };
+
   useEffect(() => {
     if (selectedLocation) {
       const updated = data.find(d => d.location === selectedLocation.location);
@@ -113,21 +126,23 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col font-sans bg-slate-50">
       {/* Admin Floating Action Button */}
       <button 
-        onClick={() => setIsAdminOpen(true)}
+        onClick={handleOpenAdmin}
         className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group border-4 border-white"
       >
-        <i className="fa-solid fa-database text-xl group-hover:hidden"></i>
-        <i className="fa-solid fa-pen-to-square text-xl hidden group-hover:block"></i>
+        <i className="fa-solid fa-database text-xl"></i>
         <span className="absolute -top-12 right-0 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest shadow-xl pointer-events-none">Database Manager</span>
       </button>
 
-      <ManagementModal 
-        isOpen={isAdminOpen} 
-        onClose={() => setIsAdminOpen(false)} 
-        data={data}
-        onSave={(newData) => setData(newData)}
-        onReset={handleResetDatabase}
-      />
+      {authProject && (
+        <ManagementModal 
+          isOpen={isAdminOpen} 
+          onClose={() => { setIsAdminOpen(false); setAuthProject(null); }} 
+          data={data}
+          onSave={(newData) => setData(newData)}
+          onReset={handleResetDatabase}
+          authenticatedProject={authProject}
+        />
+      )}
 
       {/* Header */}
       <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b border-slate-700">
@@ -143,15 +158,6 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center">
-            {/* NEW: Explicit Management Button in Header */}
-            <button 
-              onClick={() => setIsAdminOpen(true)}
-              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-slate-700 hover:text-blue-300 transition-all flex items-center gap-2"
-            >
-              <i className="fa-solid fa-database"></i>
-              Manage DB
-            </button>
-
             <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
               {['All', 'P7LH', 'P7MH'].map((p) => (
                 <button
@@ -166,14 +172,14 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full md:w-80">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                 <i className="fa-solid fa-magnifying-glass text-xs"></i>
               </div>
               <input
                 type="text"
                 className="block w-full pl-9 pr-3 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white text-sm focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                placeholder={`Search Loc / PN...`}
+                placeholder={`Search Location or Part Number...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -201,7 +207,6 @@ const App: React.FC = () => {
 
       <main className="flex-1 container mx-auto p-4 md:p-8">
         {!selectedLocation ? (
-          /* Landing Page Layout */
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-700 gap-10">
             <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm text-center max-w-4xl w-full">
               <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner border border-blue-100">
@@ -214,28 +219,20 @@ const App: React.FC = () => {
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left mb-12">
-                {/* NEW: Primary Action Card for Management */}
-                <button 
-                  onClick={() => setIsAdminOpen(true)}
-                  className="p-6 bg-slate-900 text-white rounded-3xl border border-slate-800 hover:scale-105 hover:shadow-2xl transition-all group text-left relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-4xl rotate-12 group-hover:rotate-0 transition-transform">
-                    <i className="fa-solid fa-database"></i>
-                  </div>
-                  <h4 className="font-bold text-xs mb-4 uppercase tracking-widest flex items-center gap-2 text-blue-400">
-                    <i className="fa-solid fa-pen-to-square"></i> Maintain
-                  </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed font-bold">
-                    Go to <span className="text-white underline decoration-blue-500 underline-offset-4">Database Manager</span> to edit locations & PN history.
-                  </p>
-                </button>
-
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-blue-300 hover:shadow-md transition-all group">
                   <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
                     <i className="fa-solid fa-magnifying-glass text-blue-500 group-hover:scale-110 transition-transform"></i> Searchable
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Instantly query by <span className="font-bold text-slate-700">Location</span> or <span className="font-bold text-slate-700">Part Number</span>.
+                  </p>
+                </div>
+                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-amber-300 hover:shadow-md transition-all group">
+                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
+                    <i className="fa-solid fa-lock text-amber-500 group-hover:scale-110 transition-transform"></i> Secure
+                  </h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Access maintenance via project codes <span className="text-slate-900 font-bold uppercase">P7LH</span> or <span className="text-slate-900 font-bold uppercase">P7MH</span>.
                   </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-green-300 hover:shadow-md transition-all group">
