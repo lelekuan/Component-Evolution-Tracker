@@ -11,7 +11,15 @@ const App: React.FC = () => {
   // Persistence Logic: Load from localStorage or fallback to mockData
   const [data, setData] = useState<LocationHistory[]>(() => {
     const saved = localStorage.getItem('component_tracker_data');
-    return saved ? JSON.parse(saved) : INITIAL_DATA;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved data", e);
+        return INITIAL_DATA;
+      }
+    }
+    return INITIAL_DATA;
   });
 
   useEffect(() => {
@@ -64,6 +72,12 @@ const App: React.FC = () => {
     setViewMode('timeline');
   };
 
+  const handleResetDatabase = () => {
+    localStorage.removeItem('component_tracker_data');
+    setData(INITIAL_DATA);
+    setSelectedLocation(null);
+  };
+
   const runAiAnalysis = async () => {
     if (!selectedLocation) return;
     setIsAnalyzing(true);
@@ -91,6 +105,7 @@ const App: React.FC = () => {
     if (selectedLocation) {
       const updated = data.find(d => d.location === selectedLocation.location);
       if (updated) setSelectedLocation(updated);
+      else setSelectedLocation(null);
     }
   }, [data]);
 
@@ -99,11 +114,11 @@ const App: React.FC = () => {
       {/* Admin Floating Action Button */}
       <button 
         onClick={() => setIsAdminOpen(true)}
-        className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
+        className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group border-4 border-white"
       >
         <i className="fa-solid fa-database text-xl group-hover:hidden"></i>
-        <i className="fa-solid fa-plus text-xl hidden group-hover:block"></i>
-        <span className="absolute -top-12 right-0 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest shadow-xl pointer-events-none">Manage Data</span>
+        <i className="fa-solid fa-pen-to-square text-xl hidden group-hover:block"></i>
+        <span className="absolute -top-12 right-0 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest shadow-xl pointer-events-none">Database Manager</span>
       </button>
 
       <ManagementModal 
@@ -111,6 +126,7 @@ const App: React.FC = () => {
         onClose={() => setIsAdminOpen(false)} 
         data={data}
         onSave={(newData) => setData(newData)}
+        onReset={handleResetDatabase}
       />
 
       {/* Header */}
