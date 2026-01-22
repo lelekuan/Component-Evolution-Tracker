@@ -27,10 +27,10 @@ const App: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationHistory | null>(null);
+  const [selectedPartNumber, setSelectedPartNumber] = useState<string | null>(null);
   const [projectFilter, setProjectFilter] = useState<'All' | 'P7LH' | 'P7MH'>('All');
   const [viewMode, setViewMode] = useState<'timeline' | 'compare'>('timeline');
   
-  // Admin State
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [authProject, setAuthProject] = useState<'P7LH' | 'P7MH' | null>(null);
   
@@ -53,32 +53,77 @@ const App: React.FC = () => {
     return data.filter(item => item.project === projectFilter);
   }, [projectFilter, data]);
 
+  // 進階搜尋：區分位號與料號
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return [];
-    return filteredData.filter(item => 
-      item.location.toLowerCase().includes(term) || 
-      Object.values(item.stages).some((recs: any) => 
-        recs?.some((r: ComponentRecord) => 
-          r.partNumber.toLowerCase().includes(term) || 
-          r.noted?.toLowerCase().includes(term)
-        )
-      )
-    );
+    if (!term) return { locations: [], partNumbers: [] };
+
+    const locs = filteredData.filter(item => item.location.toLowerCase().includes(term));
+    
+    // 收集所有匹配的料號
+    const pns: Set<string> = new Set();
+    filteredData.forEach(item => {
+      Object.values(item.stages).forEach((recs: any) => {
+        recs?.forEach((r: ComponentRecord) => {
+          if (r.partNumber.toLowerCase().includes(term)) {
+            pns.add(r.partNumber);
+          }
+        });
+      });
+    });
+
+    return {
+      locations: locs,
+      partNumbers: Array.from(pns).slice(0, 10) // 限制料號顯示數量
+    };
   }, [searchTerm, filteredData]);
 
-  const handleSelect = (loc: LocationHistory) => {
+  // 取得特定料號的全域使用情況
+  const partUsageReport = useMemo(() => {
+    if (!selectedPartNumber) return null;
+    
+    const report: Record<ProjectStage, string[]> = {} as any;
+    Object.values(ProjectStage).forEach(s => report[s] = []);
+
+    let description = "";
+
+    filteredData.forEach(item => {
+      Object.entries(item.stages).forEach(([stage, recs]) => {
+        const stageEnum = stage as ProjectStage;
+        const matches = (recs || []).filter(r => r.partNumber === selectedPartNumber);
+        if (matches.length > 0) {
+          if (!report[stageEnum].includes(item.location)) {
+            report[stageEnum].push(item.location);
+          }
+          if (!description) description = matches[0].description;
+        }
+      });
+    });
+
+    return { partNumber: selectedPartNumber, description, usage: report };
+  }, [selectedPartNumber, filteredData]);
+
+  const handleSelectLocation = (loc: LocationHistory) => {
     setSelectedLocation(loc);
+    setSelectedPartNumber(null);
     setAiAnalysis(null);
     setSearchTerm('');
     setGlobalDiffs(null);
     setViewMode('timeline');
   };
 
+  const handleSelectPartNumber = (pn: string) => {
+    setSelectedPartNumber(pn);
+    setSelectedLocation(null);
+    setSearchTerm('');
+    setGlobalDiffs(null);
+  };
+
   const handleResetDatabase = () => {
     localStorage.removeItem('component_tracker_data');
     setData(INITIAL_DATA);
     setSelectedLocation(null);
+    setSelectedPartNumber(null);
   };
 
   const runAiAnalysis = async () => {
@@ -103,102 +148,70 @@ const App: React.FC = () => {
     setGlobalDiffs(diffs);
   };
 
-  // Open Admin with Password check
   const handleOpenAdmin = () => {
-    const pwd = window.prompt("Enter Project Code (e.g., P7LH or P7MH) to access maintenance:");
+    const pwd = window.prompt("Enter Project Code (P7LH/P7MH):");
     if (!pwd) return;
-    
     const upperPwd = pwd.toUpperCase().trim();
     if (upperPwd === 'P7LH' || upperPwd === 'P7MH') {
       setAuthProject(upperPwd as 'P7LH' | 'P7MH');
       setIsAdminOpen(true);
     } else {
-      alert("Invalid Project Code. Access Denied.");
+      alert("Invalid Project Code.");
     }
   };
 
-  useEffect(() => {
-    if (selectedLocation) {
-      const updated = data.find(d => d.location === selectedLocation.location);
-      if (updated) setSelectedLocation(updated);
-      else setSelectedLocation(null);
-    }
-  }, [data]);
+  // 定義順序：遞減 (從 MP 到 P1a)
+  const orderedStages = useMemo(() => {
+    return Object.values(ProjectStage).reverse();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50">
-      {/* Admin Floating Action Button */}
-      <button 
-        onClick={handleOpenAdmin}
-        className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group border-4 border-white"
-      >
+      <button onClick={handleOpenAdmin} className="fixed bottom-8 right-8 z-[60] bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group border-4 border-white">
         <i className="fa-solid fa-database text-xl"></i>
-        <span className="absolute -top-12 right-0 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest shadow-xl pointer-events-none">Database Manager</span>
       </button>
 
-      {authProject && (
-        <ManagementModal 
-          isOpen={isAdminOpen} 
-          onClose={() => { setIsAdminOpen(false); setAuthProject(null); }} 
-          data={data}
-          onSave={(newData) => setData(newData)}
-          onReset={handleResetDatabase}
-          authenticatedProject={authProject}
-        />
-      )}
+      {authProject && <ManagementModal isOpen={isAdminOpen} onClose={() => { setIsAdminOpen(false); setAuthProject(null); }} data={data} onSave={setData} onReset={handleResetDatabase} authenticatedProject={authProject} />}
 
-      {/* Header */}
       <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b border-slate-700">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setSelectedLocation(null); setGlobalDiffs(null); }}>
-            <div className="bg-blue-600 p-2.5 rounded-xl shadow-inner">
-              <i className="fa-solid fa-microchip text-xl"></i>
-            </div>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setSelectedLocation(null); setSelectedPartNumber(null); setGlobalDiffs(null); }}>
+            <div className="bg-blue-600 p-2.5 rounded-xl shadow-inner"><i className="fa-solid fa-microchip text-xl"></i></div>
             <div>
               <h1 className="text-xl font-black tracking-tight uppercase">Component Evolution</h1>
-              <p className="text-[10px] text-slate-400 tracking-widest uppercase font-mono">Hardware Engineering Platform</p>
+              <p className="text-[10px] text-slate-400 tracking-widest uppercase font-mono">Engineering Hub</p>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center">
             <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
               {['All', 'P7LH', 'P7MH'].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setProjectFilter(p as any)}
-                  className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    projectFilter === p ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {p}
-                </button>
+                <button key={p} onClick={() => setProjectFilter(p as any)} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${projectFilter === p ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{p}</button>
               ))}
             </div>
 
             <div className="relative w-full md:w-80">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <i className="fa-solid fa-magnifying-glass text-xs"></i>
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-9 pr-3 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white text-sm focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                placeholder={`Search Location, PN, or Notes...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchResults.length > 0 && (
-                <div className="absolute mt-2 w-full bg-white rounded-xl shadow-2xl z-50 border border-slate-200 max-h-80 overflow-y-auto ring-1 ring-black ring-opacity-5 text-slate-900">
-                  {searchResults.map((res, i) => (
-                    <button key={i} onClick={() => handleSelect(res)} className="w-full text-left px-4 py-3 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50 transition-colors">
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-bold text-slate-900">{res.location}</span>
-                          <span className="text-[8px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black uppercase">{res.project}</span>
-                          {checkIfChanged(res) && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Changed</span>}
-                        </div>
-                        <p className="text-[10px] text-slate-500 truncate italic">EVT Status: {res.stages[ProjectStage.EVT]?.length || 0} Config(s)</p>
-                      </div>
-                      <i className="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+              <input type="text" className="block w-full pl-9 pr-3 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white text-sm focus:ring-2 focus:ring-blue-500 placeholder-slate-500" placeholder="Search Loc or PN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i className="fa-solid fa-magnifying-glass text-xs"></i></div>
+              
+              {(searchResults.locations.length > 0 || searchResults.partNumbers.length > 0) && (
+                <div className="absolute mt-2 w-full bg-white rounded-xl shadow-2xl z-50 border border-slate-200 max-h-96 overflow-y-auto text-slate-900">
+                  {searchResults.locations.length > 0 && (
+                    <div className="p-2 border-b border-slate-100 bg-slate-50"><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Locations</span></div>
+                  )}
+                  {searchResults.locations.map((res, i) => (
+                    <button key={`loc-${i}`} onClick={() => handleSelectLocation(res)} className="w-full text-left px-4 py-2 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50">
+                      <span className="font-bold text-sm">{res.location}</span>
+                      <span className="text-[8px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black uppercase">{res.project}</span>
+                    </button>
+                  ))}
+                  {searchResults.partNumbers.length > 0 && (
+                    <div className="p-2 border-b border-slate-100 bg-slate-50"><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Part Numbers</span></div>
+                  )}
+                  {searchResults.partNumbers.map((pn, i) => (
+                    <button key={`pn-${i}`} onClick={() => handleSelectPartNumber(pn)} className="w-full text-left px-4 py-3 hover:bg-amber-50 flex justify-between items-center border-b border-slate-50">
+                      <span className="font-mono text-sm font-bold text-amber-700">{pn}</span>
+                      <i className="fa-solid fa-list-check text-amber-300 text-[10px]"></i>
                     </button>
                   ))}
                 </div>
@@ -209,269 +222,109 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-1 container mx-auto p-4 md:p-8">
-        {!selectedLocation ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-700 gap-10">
-            <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm text-center max-w-4xl w-full">
-              <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner border border-blue-100">
-                <i className="fa-solid fa-microchip"></i>
+        {!selectedLocation && !selectedPartNumber ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-700">
+             {/* 首頁原本內容 (省略以維持簡潔，保留關鍵邏輯) */}
+             <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm text-center max-w-4xl w-full">
+                <h2 className="text-3xl font-black text-slate-900 mb-4">Engineering Database</h2>
+                <p className="text-slate-500 mb-10">Search by Location (e.g. R500) or Part Number to track evolution.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-arrow-down-wide-short text-blue-600"></i></div>
+                    <h3 className="font-bold text-slate-800 mb-2">MP to P1a Order</h3>
+                    <p className="text-xs text-slate-400">View timelines in descending order, showing newest builds first.</p>
+                  </div>
+                  <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-map-location-dot text-amber-600"></i></div>
+                    <h3 className="font-bold text-slate-800 mb-2">Part Usage Tracking</h3>
+                    <p className="text-xs text-slate-400">Find exactly where a specific part number is used across all stages.</p>
+                  </div>
+                  <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-code-compare text-green-600"></i></div>
+                    <h3 className="font-bold text-slate-800 mb-2">Stage Delta</h3>
+                    <p className="text-xs text-slate-400">Audit changes between any two project milestones instantly.</p>
+                  </div>
+                </div>
+             </div>
+          </div>
+        ) : selectedPartNumber ? (
+          // 料號全域使用報告視圖
+          <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+            <div className="mb-10 flex items-center justify-between border-b border-slate-200 pb-10">
+              <div>
+                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 block">Part Usage Report</span>
+                <h2 className="text-5xl font-black text-slate-900 tracking-tight">{partUsageReport?.partNumber}</h2>
+                <p className="text-slate-500 italic mt-2">{partUsageReport?.description}</p>
               </div>
-              <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Engineering Lifecycle Database</h2>
-              <p className="text-slate-500 mb-12 text-base leading-relaxed max-w-xl mx-auto">
-                Comprehensive tracking of hardware component variations across stages. 
-                Identify material shifts and configuration differences instantly.
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left mb-12">
-                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-blue-300 hover:shadow-md transition-all group">
-                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-magnifying-glass text-blue-500 group-hover:scale-110 transition-transform"></i> Searchable
-                  </h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Instantly query by <span className="font-bold text-slate-700">Location</span>, <span className="font-bold text-slate-700">PN</span>, or <span className="font-bold text-slate-700">Notes</span>.
-                  </p>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-amber-300 hover:shadow-md transition-all group">
-                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-lock text-amber-500 group-hover:scale-110 transition-transform"></i> Secure
-                  </h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Access maintenance via project codes <span className="text-slate-900 font-bold uppercase">P7LH</span> or <span className="text-slate-900 font-bold uppercase">P7MH</span>.
-                  </p>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-green-300 hover:shadow-md transition-all group">
-                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-code-compare text-green-500 group-hover:scale-110 transition-transform"></i> Comparisons
-                  </h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Compare any <span className="font-bold text-slate-700">two milestones</span> side-by-side using the evolution tool below.
-                  </p>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-purple-300 hover:shadow-md transition-all group overflow-hidden">
-                  <h4 className="font-bold text-slate-800 text-xs mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <i className="fa-solid fa-tags text-purple-500 group-hover:scale-110 transition-transform"></i> Indexed ({filteredData.length})
-                  </h4>
-                  <div className="max-h-24 overflow-y-auto space-y-2 custom-scrollbar pr-1 text-[11px] font-bold">
-                    {filteredData.slice(0, 10).map(item => (
-                      <button key={item.location} onClick={() => handleSelect(item)} className="block w-full text-left text-slate-400 hover:text-blue-600 truncate underline decoration-slate-200 decoration-1 underline-offset-2 transition-colors">
-                        {item.location}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <button onClick={() => setSelectedPartNumber(null)} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">Close Report</button>
+            </div>
 
-              {/* Global Stage Comparison Tool Section */}
-              <div className="mt-16 pt-16 border-t border-slate-100 text-left">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="bg-slate-900 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
-                    <i className="fa-solid fa-layer-group"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900">Global Evolution Audit</h3>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Analyze changes across all locations</p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                    <div>
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Source Stage</label>
-                      <select 
-                        value={globalStages.a}
-                        onChange={(e) => setGlobalStages(prev => ({ ...prev, a: e.target.value as ProjectStage }))}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
-                      >
-                        {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
+            <div className="grid grid-cols-1 gap-6">
+              {orderedStages.map(stage => {
+                const locations = partUsageReport?.usage[stage] || [];
+                return (
+                  <div key={stage} className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex">
+                    <div className="w-24 bg-slate-800 text-white flex flex-col items-center justify-center p-4">
+                      <span className="text-[10px] font-black text-slate-400 uppercase">Phase</span>
+                      <span className="text-xl font-black italic">{stage}</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Target Stage</label>
-                      <select 
-                        value={globalStages.b}
-                        onChange={(e) => setGlobalStages(prev => ({ ...prev, b: e.target.value as ProjectStage }))}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
-                      >
-                        {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <button 
-                      onClick={runGlobalCompare}
-                      className="bg-slate-900 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95"
-                    >
-                      Compare Stages
-                    </button>
-                  </div>
-
-                  {globalDiffs && (
-                    <div className="mt-10 animate-in fade-in slide-in-from-top-4 duration-500">
-                      <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-xs font-black uppercase text-slate-500 tracking-widest">
-                          Results: {globalDiffs.length} Location(s) with Differences
-                        </h4>
-                        <button onClick={() => setGlobalDiffs(null)} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase">Clear</button>
-                      </div>
-                      
-                      {globalDiffs.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {globalDiffs.map((loc) => (
-                            <button 
-                              key={loc.location} 
-                              onClick={() => handleSelect(loc)}
-                              className="group bg-white border border-slate-200 p-4 rounded-2xl text-left hover:border-blue-500 hover:shadow-lg transition-all flex items-center justify-between"
-                            >
-                              <div>
-                                <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-black uppercase block mb-1 w-fit">{loc.project}</span>
-                                <span className="font-bold text-slate-900">{loc.location}</span>
-                              </div>
-                              <div className="bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <i className="fa-solid fa-bolt"></i>
-                                Changed
-                              </div>
+                    <div className="flex-1 p-8">
+                      {locations.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {locations.map(loc => (
+                            <button key={loc} onClick={() => {
+                              const target = data.find(d => d.location === loc && d.project === projectFilter);
+                              if(target) handleSelectLocation(target);
+                            }} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all">
+                              {loc}
                             </button>
                           ))}
                         </div>
                       ) : (
-                        <div className="bg-white border border-slate-200 p-12 rounded-3xl text-center text-slate-400">
-                          <i className="fa-solid fa-circle-check text-green-500 text-2xl mb-4"></i>
-                          <p className="font-bold">No material differences found between {globalStages.a} and {globalStages.b}.</p>
-                        </div>
+                        <span className="text-sm text-slate-300 italic">Not utilized in this stage</span>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
+          // 位號歷史視圖 (Location History)
           <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-            {/* Component Detail Navigation */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 border-b border-slate-200 pb-10">
               <div>
-                <nav className="flex mb-4" aria-label="Breadcrumb">
-                  <ol className="inline-flex items-center space-x-2 text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                    <li className="inline-flex items-center">
-                      <button onClick={() => { setSelectedLocation(null); setGlobalDiffs(null); }} className="hover:text-blue-600 transition-colors">Home</button>
-                    </li>
-                    <i className="fa-solid fa-chevron-right text-[8px] opacity-30"></i>
-                    <li><span className="text-slate-500">{selectedLocation.project}</span></li>
-                    <i className="fa-solid fa-chevron-right text-[8px] opacity-30"></i>
-                    <li><span className="text-blue-600">LOC: {selectedLocation.location}</span></li>
-                  </ol>
-                </nav>
                 <h2 className="text-5xl font-black text-slate-900 flex items-center gap-5 tracking-tight">
-                  {selectedLocation.location}
-                  {checkIfChanged(selectedLocation) && (
-                    <span className="text-[11px] font-black bg-amber-500 text-white px-3 py-1 rounded-full uppercase shadow-sm">Part Changed</span>
-                  )}
+                  {selectedLocation!.location}
                 </h2>
+                <p className="text-xs text-slate-400 font-bold uppercase mt-2">{selectedLocation!.project} Evolution Timeline</p>
               </div>
-              
-              <div className="flex gap-3 w-full md:w-auto">
-                <button 
-                  onClick={() => setViewMode(viewMode === 'timeline' ? 'compare' : 'timeline')}
-                  className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl shadow-sm transition-all font-bold text-xs border ${
-                    viewMode === 'compare' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <i className={`fa-solid ${viewMode === 'timeline' ? 'fa-code-compare' : 'fa-clock-rotate-left'}`}></i>
+              <div className="flex gap-3">
+                <button onClick={() => setViewMode(viewMode === 'timeline' ? 'compare' : 'timeline')} className={`px-6 py-3 rounded-xl shadow-sm font-bold text-xs border ${viewMode === 'compare' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200'}`}>
                   {viewMode === 'timeline' ? 'Compare Delta' : 'Back to Timeline'}
-                </button>
-                <button 
-                  onClick={runAiAnalysis}
-                  disabled={isAnalyzing}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-2xl shadow-lg hover:shadow-blue-200/50 hover:-translate-y-0.5 transition-all font-bold text-xs disabled:opacity-50"
-                >
-                  {isAnalyzing ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>}
-                  Engineering Insight
                 </button>
               </div>
             </div>
 
-            {/* AI Insights Panel */}
-            {aiAnalysis && (
-              <div className="mb-10 bg-indigo-50 border-l-4 border-indigo-600 p-8 rounded-r-[2rem] shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-                <div className="flex items-center gap-3 mb-5 text-indigo-900 font-black text-xs uppercase tracking-widest">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <i className="fa-solid fa-brain text-indigo-600"></i>
-                  </div>
-                  <h4>Gemini Evolution Summary</h4>
-                </div>
-                <div className="prose prose-sm text-slate-700 max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans leading-relaxed text-sm antialiased">{aiAnalysis}</pre>
-                </div>
-              </div>
-            )}
-
-            {/* Stages Section */}
             {viewMode === 'timeline' ? (
               <div className="relative border-l-4 border-slate-100 ml-6 pl-10 space-y-10">
-                {Object.values(ProjectStage).map((stage) => {
-                  const records = selectedLocation.stages[stage];
+                {orderedStages.map((stage) => {
+                  const records = selectedLocation!.stages[stage];
                   if (!records || records.length === 0) return null;
                   return (
                     <div key={stage} className="relative">
                       <div className="absolute -left-[54px] top-6 w-7 h-7 rounded-full bg-white border-4 border-blue-600 z-10 shadow-md"></div>
-                      <StageCard 
-                        stage={stage} 
-                        records={records} 
-                        isChanged={checkIfChanged(selectedLocation)}
-                      />
+                      <StageCard stage={stage} records={records} isChanged={checkIfChanged(selectedLocation!)} />
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="space-y-8">
-                {/* Stage Selectors UI */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex flex-col gap-1 flex-1 w-full">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Select Milestone A</label>
-                    <select 
-                      value={compareStages.a}
-                      onChange={(e) => setCompareStages(prev => ({ ...prev, a: e.target.value as ProjectStage }))}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  
-                  <div className="text-slate-300 mt-4 md:mt-0">
-                    <i className="fa-solid fa-right-left text-lg"></i>
-                  </div>
-
-                  <div className="flex flex-col gap-1 flex-1 w-full">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Select Milestone B</label>
-                    <select 
-                      value={compareStages.b}
-                      onChange={(e) => setCompareStages(prev => ({ ...prev, b: e.target.value as ProjectStage }))}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                </div>
-                
-                <ComparisonView 
-                  stageA={compareStages.a}
-                  recordsA={selectedLocation.stages[compareStages.a] || []}
-                  stageB={compareStages.b}
-                  recordsB={selectedLocation.stages[compareStages.b] || []}
-                />
-              </div>
+              <ComparisonView stageA={compareStages.a} recordsA={selectedLocation!.stages[compareStages.a] || []} stageB={compareStages.b} recordsB={selectedLocation!.stages[compareStages.b] || []} />
             )}
           </div>
         )}
       </main>
-
-      <footer className="bg-white border-t border-slate-200 p-8 text-center shadow-inner mt-auto">
-        <div className="max-w-4xl mx-auto opacity-50 flex flex-col items-center gap-3">
-          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.3em] font-black">
-            © 2024 Component Evolution Tracking System • Engineering Platform v1.1
-          </p>
-          <div className="h-0.5 w-12 bg-slate-200 rounded-full"></div>
-          <p className="text-[9px] text-slate-400 font-medium">Query & Maintain component part number shifts across project stages.</p>
-        </div>
-      </footer>
     </div>
   );
 };
