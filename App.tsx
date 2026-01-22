@@ -73,23 +73,56 @@ const App: React.FC = () => {
     };
   }, [searchTerm, filteredData]);
 
+  // 時序順序 (遞增: P1a -> MP)
+  const chronologicalStages = useMemo(() => Object.values(ProjectStage), []);
+
   const partUsageReport = useMemo(() => {
     if (!selectedPartNumber) return null;
-    const report: Record<ProjectStage, string[]> = {} as any;
+    
+    const report: Record<ProjectStage, { location: string; status: 'added' | 'removed' | 'stable' }[]> = {} as any;
     Object.values(ProjectStage).forEach(s => report[s] = []);
+    
     let description = "";
+
+    // 1. Gather raw locations per stage
+    const usageByStage: Record<ProjectStage, string[]> = {} as any;
+    Object.values(ProjectStage).forEach(s => usageByStage[s] = []);
+
     filteredData.forEach(item => {
       Object.entries(item.stages).forEach(([stage, recs]) => {
         const stageEnum = stage as ProjectStage;
         const matches = (recs || []).filter(r => r.partNumber === selectedPartNumber);
         if (matches.length > 0) {
-          if (!report[stageEnum].includes(item.location)) report[stageEnum].push(item.location);
+          usageByStage[stageEnum].push(item.location);
           if (!description) description = matches[0].description;
         }
       });
     });
+
+    // 2. Compare with previous stage to determine Added/Removed/Stable
+    chronologicalStages.forEach((stage, idx) => {
+      const currentLocs = usageByStage[stage];
+      const prevLocs = idx > 0 ? usageByStage[chronologicalStages[idx - 1]] : [];
+
+      // Find Added & Stable
+      currentLocs.forEach(loc => {
+        if (!prevLocs.includes(loc)) {
+          report[stage].push({ location: loc, status: 'added' });
+        } else {
+          report[stage].push({ location: loc, status: 'stable' });
+        }
+      });
+
+      // Find Removed
+      prevLocs.forEach(loc => {
+        if (!currentLocs.includes(loc)) {
+          report[stage].push({ location: loc, status: 'removed' });
+        }
+      });
+    });
+
     return { partNumber: selectedPartNumber, description, usage: report };
-  }, [selectedPartNumber, filteredData]);
+  }, [selectedPartNumber, filteredData, chronologicalStages]);
 
   const handleSelectLocation = (loc: LocationHistory) => {
     setSelectedLocation(loc);
@@ -130,8 +163,6 @@ const App: React.FC = () => {
 
   // 渲染用順序 (遞減: MP -> P1a)
   const orderedStages = useMemo(() => Object.values(ProjectStage).reverse(), []);
-  // 時序順序 (遞增: P1a -> MP)
-  const chronologicalStages = useMemo(() => Object.values(ProjectStage), []);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#F8FAFC]">
@@ -297,26 +328,45 @@ const App: React.FC = () => {
                 <h2 className="text-5xl font-black text-slate-900 tracking-tight">{partUsageReport?.partNumber}</h2>
                 <p className="text-slate-500 italic mt-2">{partUsageReport?.description}</p>
               </div>
-              <button onClick={() => setSelectedPartNumber(null)} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">Close Report</button>
+              <button onClick={() => setSelectedPartNumber(null)} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-900 hover:text-white transition-all">Close Report</button>
             </div>
             <div className="grid grid-cols-1 gap-6">
               {orderedStages.map(stage => {
-                const locations = partUsageReport?.usage[stage] || [];
+                const usages = partUsageReport?.usage[stage] || [];
+                const addedCount = usages.filter(u => u.status === 'added').length;
+                const removedCount = usages.filter(u => u.status === 'removed').length;
+                
                 return (
-                  <div key={stage} className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex">
-                    <div className="w-24 bg-slate-800 text-white flex flex-col items-center justify-center p-4">
+                  <div key={stage} className={`bg-white rounded-[2rem] border shadow-sm overflow-hidden flex transition-all ${addedCount || removedCount ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
+                    <div className={`w-24 flex flex-col items-center justify-center p-4 text-white ${addedCount || removedCount ? 'bg-slate-700' : 'bg-slate-800'}`}>
                       <span className="text-[10px] font-black text-slate-400 uppercase">Phase</span>
                       <span className="text-xl font-black italic">{stage}</span>
                     </div>
                     <div className="flex-1 p-8">
-                      {locations.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {locations.map(loc => (
-                            <button key={loc} onClick={() => {
-                              const target = data.find(d => d.location === loc);
-                              if(target) handleSelectLocation(target);
-                            }} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all">
-                              {loc}
+                      {usages.length > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                          {usages.map((usage, idx) => (
+                            <button 
+                              key={`${usage.location}-${idx}`} 
+                              onClick={() => {
+                                const target = data.find(d => d.location === usage.location);
+                                if(target) handleSelectLocation(target);
+                              }} 
+                              className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all flex items-center gap-2 group relative ${
+                                usage.status === 'added' 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-600 hover:text-white' 
+                                  : usage.status === 'removed'
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200 border-dashed opacity-70 line-through grayscale-[0.3] hover:opacity-100'
+                                  : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-600 hover:text-white'
+                              }`}
+                            >
+                              {usage.location}
+                              {usage.status === 'added' && (
+                                <span className="text-[8px] bg-emerald-500 text-white px-1.5 py-0.5 rounded font-black">+ ADDED</span>
+                              )}
+                              {usage.status === 'removed' && (
+                                <span className="text-[8px] bg-rose-500 text-white px-1.5 py-0.5 rounded font-black">- REMOVED</span>
+                              )}
                             </button>
                           ))}
                         </div>
