@@ -6,6 +6,9 @@ import StageCard from './components/StageCard';
 import ComparisonView from './components/ComparisonView';
 import ManagementModal from './components/ManagementModal';
 
+// 每當 mockData.ts 有大幅度更新，請手動增加這個版本號 (例如 v1 -> v2)
+const CURRENT_DATA_VERSION = "v2024-05-22-01";
+
 type ChangeType = 'added' | 'removed' | 'modified' | 'none';
 
 interface GlobalDiffResult {
@@ -15,20 +18,27 @@ interface GlobalDiffResult {
 
 const App: React.FC = () => {
   const [data, setData] = useState<LocationHistory[]>(() => {
-    const saved = localStorage.getItem('component_tracker_data');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse saved data", e);
-        return INITIAL_DATA;
-      }
+    const savedVersion = localStorage.getItem('component_tracker_version');
+    const savedData = localStorage.getItem('component_tracker_data');
+
+    // 如果版本不符，或者完全沒有存過資料，就讀取最新的 INITIAL_DATA
+    if (savedVersion !== CURRENT_DATA_VERSION || !savedData) {
+      localStorage.setItem('component_tracker_version', CURRENT_DATA_VERSION);
+      localStorage.setItem('component_tracker_data', JSON.stringify(INITIAL_DATA));
+      return INITIAL_DATA;
     }
-    return INITIAL_DATA;
+
+    try {
+      return JSON.parse(savedData);
+    } catch (e) {
+      console.error("Failed to parse saved data", e);
+      return INITIAL_DATA;
+    }
   });
 
   useEffect(() => {
     localStorage.setItem('component_tracker_data', JSON.stringify(data));
+    localStorage.setItem('component_tracker_version', CURRENT_DATA_VERSION);
   }, [data]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,7 +144,6 @@ const App: React.FC = () => {
     if (!existsA && existsB) return 'added';
     if (existsA && !existsB) return 'removed';
     
-    // 對比料號與配置
     const sAPNs = sA.map(r => `${r.partNumber}-${r.configs.join(',')}`).sort().join('|');
     const sBPNs = sB.map(r => `${r.partNumber}-${r.configs.join(',')}`).sort().join('|');
     
