@@ -134,8 +134,9 @@ const App: React.FC = () => {
     if (!existsA && existsB) return 'added';
     if (existsA && !existsB) return 'removed';
     
-    const sAPNs = sA.map(r => r.partNumber).sort().join(',');
-    const sBPNs = sB.map(r => r.partNumber).sort().join(',');
+    // 對比料號與配置
+    const sAPNs = sA.map(r => `${r.partNumber}-${r.configs.join(',')}`).sort().join('|');
+    const sBPNs = sB.map(r => `${r.partNumber}-${r.configs.join(',')}`).sort().join('|');
     
     return sAPNs !== sBPNs ? 'modified' : 'none';
   };
