@@ -5,7 +5,13 @@ import { LocationHistory, ProjectStage, ComponentRecord } from './types';
 import StageCard from './components/StageCard';
 import ComparisonView from './components/ComparisonView';
 import ManagementModal from './components/ManagementModal';
-import { analyzeChanges } from './services/geminiService';
+
+type ChangeType = 'added' | 'removed' | 'modified' | 'none';
+
+interface GlobalDiffResult {
+  location: LocationHistory;
+  type: ChangeType;
+}
 
 const App: React.FC = () => {
   const [data, setData] = useState<LocationHistory[]>(() => {
@@ -43,14 +49,13 @@ const App: React.FC = () => {
     a: ProjectStage.P1B,
     b: ProjectStage.EVT
   });
-  const [globalDiffs, setGlobalDiffs] = useState<LocationHistory[] | null>(null);
+  const [globalDiffs, setGlobalDiffs] = useState<GlobalDiffResult[] | null>(null);
 
   const filteredData = useMemo(() => {
     if (projectFilter === 'All') return data;
     return data.filter(item => item.project === projectFilter);
   }, [projectFilter, data]);
 
-  // 進階搜尋：區分位號與料號
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return { locations: [], partNumbers: [] };
@@ -73,7 +78,6 @@ const App: React.FC = () => {
     };
   }, [searchTerm, filteredData]);
 
-  // 時序順序 (遞增: P1a -> MP)
   const chronologicalStages = useMemo(() => Object.values(ProjectStage), []);
 
   const partUsageReport = useMemo(() => {
@@ -83,8 +87,6 @@ const App: React.FC = () => {
     Object.values(ProjectStage).forEach(s => report[s] = []);
     
     let description = "";
-
-    // 1. Gather raw locations per stage
     const usageByStage: Record<ProjectStage, string[]> = {} as any;
     Object.values(ProjectStage).forEach(s => usageByStage[s] = []);
 
@@ -99,12 +101,10 @@ const App: React.FC = () => {
       });
     });
 
-    // 2. Compare with previous stage to determine Added/Removed/Stable
     chronologicalStages.forEach((stage, idx) => {
       const currentLocs = usageByStage[stage];
       const prevLocs = idx > 0 ? usageByStage[chronologicalStages[idx - 1]] : [];
 
-      // Find Added & Stable
       currentLocs.forEach(loc => {
         if (!prevLocs.includes(loc)) {
           report[stage].push({ location: loc, status: 'added' });
@@ -113,7 +113,6 @@ const App: React.FC = () => {
         }
       });
 
-      // Find Removed
       prevLocs.forEach(loc => {
         if (!currentLocs.includes(loc)) {
           report[stage].push({ location: loc, status: 'removed' });
@@ -123,6 +122,23 @@ const App: React.FC = () => {
 
     return { partNumber: selectedPartNumber, description, usage: report };
   }, [selectedPartNumber, filteredData, chronologicalStages]);
+
+  const getChangeType = (loc: LocationHistory, stageA: ProjectStage, stageB: ProjectStage): ChangeType => {
+    const sA = loc.stages[stageA] || [];
+    const sB = loc.stages[stageB] || [];
+    
+    const existsA = sA.length > 0;
+    const existsB = sB.length > 0;
+
+    if (!existsA && !existsB) return 'none';
+    if (!existsA && existsB) return 'added';
+    if (existsA && !existsB) return 'removed';
+    
+    const sAPNs = sA.map(r => r.partNumber).sort().join(',');
+    const sBPNs = sB.map(r => r.partNumber).sort().join(',');
+    
+    return sAPNs !== sBPNs ? 'modified' : 'none';
+  };
 
   const handleSelectLocation = (loc: LocationHistory) => {
     setSelectedLocation(loc);
@@ -139,16 +155,6 @@ const App: React.FC = () => {
     setGlobalDiffs(null);
   };
 
-  const checkIfChanged = (loc: LocationHistory, stageA: ProjectStage, stageB: ProjectStage) => {
-    const sA = loc.stages[stageA] || [];
-    const sB = loc.stages[stageB] || [];
-    if (sA.length === 0 && sB.length === 0) return false;
-    if (sA.length !== sB.length) return true;
-    const sAPNs = sA.map(r => r.partNumber).sort().join(',');
-    const sBPNs = sB.map(r => r.partNumber).sort().join(',');
-    return sAPNs !== sBPNs;
-  };
-
   const handleOpenAdmin = () => {
     const pwd = window.prompt("Enter Project Code (P7LH/P7MH):");
     if (!pwd) return;
@@ -161,7 +167,6 @@ const App: React.FC = () => {
     }
   };
 
-  // 渲染用順序 (遞減: MP -> P1a)
   const orderedStages = useMemo(() => Object.values(ProjectStage).reverse(), []);
 
   return (
@@ -283,18 +288,26 @@ const App: React.FC = () => {
               <div className="bg-white p-8 md:p-12 rounded-[3rem] border border-slate-100 shadow-xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Source Stage</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Source Stage (A)</label>
                     <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" value={globalStages.a} onChange={(e) => setGlobalStages({...globalStages, a: e.target.value as ProjectStage})}>
                       {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Stage</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Stage (B)</label>
                     <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" value={globalStages.b} onChange={(e) => setGlobalStages({...globalStages, b: e.target.value as ProjectStage})}>
                       {Object.values(ProjectStage).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <button onClick={() => setGlobalDiffs(data.filter(loc => checkIfChanged(loc, globalStages.a, globalStages.b)))} className="bg-[#0F172A] text-white rounded-2xl py-4 px-10 font-black text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-xl h-[58px]">
+                  <button 
+                    onClick={() => {
+                      const results = data
+                        .map(loc => ({ location: loc, type: getChangeType(loc, globalStages.a, globalStages.b) }))
+                        .filter(res => res.type !== 'none');
+                      setGlobalDiffs(results);
+                    }} 
+                    className="bg-[#0F172A] text-white rounded-2xl py-4 px-10 font-black text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-xl h-[58px]"
+                  >
                     Compare Stages
                   </button>
                 </div>
@@ -305,13 +318,25 @@ const App: React.FC = () => {
                       <h4 className="text-sm font-black text-slate-900">Found {globalDiffs.length} Change(s)</h4>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {globalDiffs.map(loc => (
-                        <button key={loc.location} onClick={() => handleSelectLocation(loc)} className="text-left p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-400 transition-all group">
+                      {globalDiffs.map(res => (
+                        <button key={res.location.location} onClick={() => handleSelectLocation(res.location)} className={`text-left p-6 rounded-2xl border-2 transition-all group ${
+                          res.type === 'added' ? 'bg-emerald-50 border-emerald-100 hover:border-emerald-400' :
+                          res.type === 'removed' ? 'bg-rose-50 border-rose-100 hover:border-rose-400' :
+                          'bg-amber-50 border-amber-100 hover:border-amber-400'
+                        }`}>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="font-black text-slate-900 text-xl">{loc.location}</span>
-                            <span className="text-[9px] bg-slate-200 px-2 py-0.5 rounded font-bold uppercase">{loc.project}</span>
+                            <span className="font-black text-slate-900 text-xl">{res.location.location}</span>
+                            <span className={`text-[9px] px-2 py-0.5 rounded font-black uppercase ${
+                              res.type === 'added' ? 'bg-emerald-600 text-white' :
+                              res.type === 'removed' ? 'bg-rose-600 text-white' :
+                              'bg-amber-500 text-white'
+                            }`}>
+                              {res.type === 'added' ? 'Added to B' : res.type === 'removed' ? 'Removed from B' : 'Modified'}
+                            </span>
                           </div>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Part Revision Detected</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                            {res.type === 'added' ? 'New location in target' : res.type === 'removed' ? 'Location dropped in target' : 'Part revisions detected'}
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -398,13 +423,8 @@ const App: React.FC = () => {
                   const records = selectedLocation!.stages[stage];
                   if (!records || records.length === 0) return null;
                   
-                  // 找出時序上的前一個階段來進行 Highlight 判斷
                   const currentIdx = chronologicalStages.indexOf(stage);
-                  let isChanged = false;
-                  if (currentIdx > 0) {
-                    const prevStage = chronologicalStages[currentIdx - 1];
-                    isChanged = checkIfChanged(selectedLocation!, stage, prevStage);
-                  }
+                  const isChanged = currentIdx > 0 ? getChangeType(selectedLocation!, stage, chronologicalStages[currentIdx - 1]) !== 'none' : false;
 
                   return (
                     <div key={stage} className="relative">
