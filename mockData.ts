@@ -14,6 +14,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "116S00039",
+          "description": "RES,TK,5.1K OHM,5%,1/16W,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -22,6 +32,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "116S00046",
+          "description": "RES,TK,1.3K OHM,5%,1/16W,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "116S00046",
           "description": "RES,TK,1.3K OHM,5%,1/16W,0402",
@@ -46,6 +66,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "116S00046",
+          "description": "RES,TK,1.3K OHM,5%,1/16W,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -54,6 +84,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "116S00046",
+          "description": "RES,TK,1.3K OHM,5%,1/16W,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "116S00046",
           "description": "RES,TK,1.3K OHM,5%,1/16W,0402",
@@ -78,6 +118,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "116S00060",
+          "description": "RES,TK,3K OHM,5%,1/16W,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -86,6 +136,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00073",
           "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
@@ -110,6 +170,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -118,6 +188,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00073",
           "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
@@ -142,6 +222,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -150,6 +240,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00073",
           "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
@@ -174,6 +274,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -182,6 +292,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00073",
           "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
@@ -206,6 +326,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -214,6 +344,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00073",
+          "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00073",
           "description": "RES,TK,0 OHM,1A MAX,1/20W,0201",
@@ -238,6 +378,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00095",
+          "description": "RES,TK,100K OHM,5%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -246,6 +396,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00095",
+          "description": "RES,TK,100K OHM,5%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00095",
           "description": "RES,TK,100K OHM,5%,1/20W,0201",
@@ -270,6 +430,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "117S00099",
+          "description": "RES,TK,2.2K OHM,5%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -278,6 +448,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "117S00099",
+          "description": "RES,TK,2.2K OHM,5%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "117S00099",
           "description": "RES,TK,2.2K OHM,5%,1/20W,0201",
@@ -302,6 +482,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "118S00090",
+          "description": "RES,MF,1 OHM,1%,1/10W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -310,6 +500,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "118S00090",
+          "description": "RES,MF,1 OHM,1%,1/10W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "118S00090",
           "description": "RES,MF,1 OHM,1%,1/10W,0201",
@@ -334,6 +534,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "118S00090",
+          "description": "RES,MF,1 OHM,1%,1/10W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -342,6 +552,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "118S00090",
+          "description": "RES,MF,1 OHM,1%,1/10W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "118S00090",
           "description": "RES,MF,1 OHM,1%,1/10W,0201",
@@ -366,6 +586,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -374,6 +604,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "118S00383",
           "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
@@ -398,6 +638,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -406,6 +656,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "118S00383",
           "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
@@ -430,6 +690,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -438,6 +708,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "118S00383",
+          "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "118S00383",
           "description": "RES,TK,5.1K OHM,1%,1/20W,0201",
@@ -462,6 +742,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "132S0444",
+          "description": "CAP,CER,X5R,0.1UF,10%,6.3V,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -470,6 +760,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "132S0444",
+          "description": "CAP,CER,X5R,0.1UF,10%,6.3V,0201",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "132S0444",
           "description": "CAP,CER,X5R,0.1UF,10%,6.3V,0201",
@@ -510,6 +810,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "138S00071",
+          "description": "CAP,CER,X5R,4UF,20%,6.3V,0201,T=0.55MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -542,6 +852,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "138S00071",
+          "description": "CAP,CER,X5R,4UF,20%,6.3V,0201,T=0.55MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -550,6 +870,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "311S0633",
+          "description": "IC,LEVEL TRANS,2-BIT,BI-DIR,W/ESD,DSBGA8",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "311S0633",
           "description": "IC,LEVEL TRANS,2-BIT,BI-DIR,W/ESD,DSBGA8",
@@ -574,6 +904,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "353S01425",
+          "description": "IC,INA231B,PWR MON,2.7-5.5V,WCSP12",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -582,6 +922,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "353S01425",
+          "description": "IC,INA231B,PWR MON,2.7-5.5V,WCSP12",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "353S01425",
           "description": "IC,INA231B,PWR MON,2.7-5.5V,WCSP12",
@@ -614,6 +964,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "372S0182",
+          "description": "XSTR,DUAL,NPN,40V,200MA,6P SOT-963",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -633,6 +993,16 @@ export const MOCK_DATA: LocationHistory[] = [
         {
           "partNumber": "376S00616",
           "description": "XSTR,FET,N-CH,20V,500MA,VTH=1V,DFN3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
           "configs": [
             "All"
           ],
@@ -662,6 +1032,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -681,6 +1061,16 @@ export const MOCK_DATA: LocationHistory[] = [
         {
           "partNumber": "376S00616",
           "description": "XSTR,FET,N-CH,20V,500MA,VTH=1V,DFN3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
           "configs": [
             "All"
           ],
@@ -710,6 +1100,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -729,6 +1129,16 @@ export const MOCK_DATA: LocationHistory[] = [
         {
           "partNumber": "376S00616",
           "description": "XSTR,FET,N-CH,20V,500MA,VTH=1V,DFN3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
           "configs": [
             "All"
           ],
@@ -758,6 +1168,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -777,6 +1197,16 @@ export const MOCK_DATA: LocationHistory[] = [
         {
           "partNumber": "376S00616",
           "description": "XSTR,FET,N-CH,20V,500MA,VTH=1V,DFN3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
           "configs": [
             "All"
           ],
@@ -806,6 +1236,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00076",
+          "description": "XSTR,FET,N-CH,20V,100MA,VTH=0.9V,CST3",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -830,6 +1270,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "376S00463",
+          "description": "FET,N/P COMP,20V,0.49A,SC89-6",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -846,6 +1296,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S00029",
+          "description": "LED,WHITE,TOP,140MCD@5MA,2.4V,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -854,6 +1314,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "378S00029",
+          "description": "LED,WHITE,TOP,140MCD@5MA,2.4V,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "378S00029",
           "description": "LED,WHITE,TOP,140MCD@5MA,2.4V,0402",
@@ -886,6 +1356,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S00032",
+          "description": "LED,BLUE,28-90MCD@5MA,470NM,130DEG,0402",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -902,6 +1382,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S00072",
+          "description": "LED,GREEN,569NM,2.1MCD@1MA,1X0.6X0.25MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -910,6 +1400,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "378S00072",
+          "description": "LED,GREEN,569NM,2.1MCD@1MA,1X0.6X0.25MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "378S00072",
           "description": "LED,GREEN,569NM,2.1MCD@1MA,1X0.6X0.25MM",
@@ -942,6 +1442,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S0343",
+          "description": "LED,AMBER,N2,P1,35-56MCD@2MA,606NM,.35MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -958,6 +1468,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         },
+        {
+          "partNumber": "378S0326",
+          "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "378S0326",
           "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
@@ -990,6 +1510,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S0326",
+          "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -1006,6 +1536,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         },
+        {
+          "partNumber": "378S0326",
+          "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "378S0326",
           "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
@@ -1038,6 +1578,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "378S0326",
+          "description": "LED,0402,TRUE GREEN,35-56MCD@2MA,525NM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -1046,6 +1596,16 @@ export const MOCK_DATA: LocationHistory[] = [
     "project": "P7LH",
     "stages": {
       "EVT": [
+        {
+          "partNumber": "516S00115",
+          "description": "CONN,PLUG,B2B,12+2P,P=0.35MM,H=0.6MM",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
         {
           "partNumber": "516S00115",
           "description": "CONN,PLUG,B2B,12+2P,P=0.35MM,H=0.6MM",
@@ -1070,6 +1630,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "516S01204",
+          "description": "CONN,PLUG,12+2P,P=0.35,H=0.6,PF",
+          "configs": [
+            "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
       ]
     }
   },
@@ -1083,6 +1653,16 @@ export const MOCK_DATA: LocationHistory[] = [
           "description": "SWITCH,TOP PUSH,1.6N,50MA,12V,SM,3X2.7MM",
           "configs": [
             "All"
+          ],
+          "noted": "Debug BOM"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "705S00086",
+          "description": "SWITCH,TOP PUSH,1.6N,50MA,12V,SM,3X2.7MM",
+          "configs": [
+            "Main"
           ],
           "noted": "Debug BOM"
         }
@@ -1102,6 +1682,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "705S00086",
+          "description": "SWITCH,TOP PUSH,1.6N,50MA,12V,SM,3X2.7MM",
+          "configs": [
+            "Main"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -1118,6 +1708,16 @@ export const MOCK_DATA: LocationHistory[] = [
           ],
           "noted": "Debug BOM"
         }
+      ],
+      "P1b": [
+        {
+          "partNumber": "705S00086",
+          "description": "SWITCH,TOP PUSH,1.6N,50MA,12V,SM,3X2.7MM",
+          "configs": [
+            "Main"
+          ],
+          "noted": "Debug BOM"
+        }
       ]
     }
   },
@@ -1131,6 +1731,16 @@ export const MOCK_DATA: LocationHistory[] = [
           "description": "LED,TOP,BLUE,22.5MCD@2 MA,0.65X0.375MM",
           "configs": [
             "All"
+          ],
+          "noted": "Debug BOM;\r\nNot in W/O ENET"
+        }
+      ],
+      "P1b": [
+        {
+          "partNumber": "998-19870",
+          "description": "LED,TOP,BLUE,22.5MCD@2 MA,0.65X0.375MM",
+          "configs": [
+            "Main"
           ],
           "noted": "Debug BOM;\r\nNot in W/O ENET"
         }
