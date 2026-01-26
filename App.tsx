@@ -445,7 +445,43 @@ const App: React.FC = () => {
                 })}
               </div>
             ) : (
-              <ComparisonView stageA={compareStages.a} recordsA={selectedLocation!.stages[compareStages.a] || []} stageB={compareStages.b} recordsB={selectedLocation!.stages[compareStages.b] || []} />
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                {/* 新增的階段選擇器 */}
+                <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 flex flex-wrap items-center justify-center gap-6 shadow-inner">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Base Stage (A)</label>
+                    <select 
+                      className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-black focus:ring-2 focus:ring-blue-500 outline-none shadow-sm min-w-[140px]"
+                      value={compareStages.a}
+                      onChange={(e) => setCompareStages({ ...compareStages, a: e.target.value as ProjectStage })}
+                    >
+                      {chronologicalStages.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  
+                  <div className="text-slate-300 mt-5 bg-white w-10 h-10 rounded-full flex items-center justify-center border border-slate-100 shadow-sm">
+                    <i className="fa-solid fa-right-left text-xs"></i>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Compare Stage (B)</label>
+                    <select 
+                      className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-black focus:ring-2 focus:ring-blue-500 outline-none shadow-sm min-w-[140px]"
+                      value={compareStages.b}
+                      onChange={(e) => setCompareStages({ ...compareStages, b: e.target.value as ProjectStage })}
+                    >
+                      {chronologicalStages.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <ComparisonView 
+                  stageA={compareStages.a} 
+                  recordsA={selectedLocation!.stages[compareStages.a] || []} 
+                  stageB={compareStages.b} 
+                  recordsB={selectedLocation!.stages[compareStages.b] || []} 
+                />
+              </div>
             )}
           </div>
         )}
