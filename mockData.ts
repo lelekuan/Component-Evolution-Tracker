@@ -103002,37 +103002,5 @@ export const MOCK_DATA: LocationHistory[] = [
         }
       ]
     }
-  },
-  {
-    "location": "U5000",
-    "project": "P7LH",
-    "stages": {
-      "P1b": [
-        {
-          "partNumber": "338S00941",
-          "description": "IC,JUNO,SE310S,A0,DEV,10C,WLCSP42",
-          "configs": [
-            "All"
-          ],
-          "noted": ""
-        }
-      ]
-    }
-  },
-  {
-    "location": "UL000",
-    "project": "P7LH",
-    "stages": {
-      "P1b": [
-        {
-          "partNumber": "339M00480",
-          "description": "MODULE,SIP,MATCHA,ES2.17B,U,LGA545",
-          "configs": [
-            "All"
-          ],
-          "noted": ""
-        }
-      ]
-    }
   }
 ];
